@@ -12,6 +12,15 @@ Graph::Graph(int nVec)
 Graph::~Graph()
 {
 }
+int Graph::zleKraw(int * tab)
+{
+	int badEdge = 0;
+	for (int i = 0; i < nVec; ++i)
+		for (list<int>::iterator j = lS[i].begin(); j != lS[i].end(); ++j)
+			if (tab[i] == tab[*j])
+				++badEdge;
+	return badEdge/2;
+}
 void Graph::wypisz()
 {
 	list<int>::iterator j;
@@ -42,7 +51,7 @@ void Graph::algZac()
 		for (j = 0; j < nVec; j++) K[j] = false;
 		for (k = lS[i].begin(); k != lS[i].end(); ++k)
 			if (TK[*k] != -1)
-				K[*k] = true;
+				K[TK[*k]] = true;
 		for (j = 0; K[j]; ++j);
 		TK[i] = j;
 	}
@@ -51,3 +60,4 @@ void Graph::algZac()
 			max = TK[i];
 	cout << "Ilosc potrzebnych kolorow: " << max + 1 << endl;
 }
+
