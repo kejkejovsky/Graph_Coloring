@@ -12,10 +12,11 @@ public:
 	int iloscKolor();
 	int iloscZlychW();
 	void genLos();
-	void koloruj(Chromosome p1, Chromosome p2);
-	void mutation();
+	void koloruj(Chromosome p1, Chromosome p2, bool W, int point);
+	void mutation(double f);
 	void mutacja1();
 	void mutacja2();
+	double fitness();
 };
 class Population:public Chromosome {
 protected:
@@ -27,10 +28,10 @@ public:
 	void parents1(Chromosome &p1, Chromosome &p2);
 	void parents2(Chromosome &p1, Chromosome &p2);
 	void firstGen(Graph g);
-	void pokoloruj(Graph g, Chromosome p1, Chromosome p2);
+	void pokoloruj(Graph g, Population &p);
 	double avgBadEdges();
-	int avgColors();
-
+	double avgColors();
+	double avgFitness();
 };
 
 void AlgGen(Graph g);

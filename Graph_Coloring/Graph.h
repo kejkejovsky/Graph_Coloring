@@ -11,6 +11,7 @@ public:
 	list<int>::iterator pocz(int v) { return lS[v].begin(); };
 	list<int>::iterator kon(int v) { return lS[v].end(); };
 	int dajN() { return nVec; };
+	int dajK();
 	int zleKraw(int *tab);
 	void wypisz();
 	void dodajK(int w, int s);

@@ -12,6 +12,13 @@ Graph::Graph(int nVec)
 Graph::~Graph()
 {
 }
+int Graph::dajK()
+{
+	int sum = 0;
+	for (int i = 0; i < nVec; ++i)
+		sum += lS[i].size();
+	return sum/2;
+}
 int Graph::zleKraw(int * tab)
 {
 	int badEdge = 0;
