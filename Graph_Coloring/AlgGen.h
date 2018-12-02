@@ -16,6 +16,7 @@ public:
 	void mutation(double f);
 	void mutacja1();
 	void mutacja2();
+	void wypisz() { for (int i = 0; i < rozmiar; ++i) cout << tabKol[i] << " "; }
 	double fitness();
 };
 class Population:public Chromosome {

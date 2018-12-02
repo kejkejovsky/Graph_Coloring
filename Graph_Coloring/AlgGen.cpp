@@ -108,7 +108,7 @@ double Chromosome::fitness()
 			prod = 1. * prod * sum / rozmiar;
 	}
 	return 1. * (1. - (1. * iloscKolor() / graph.dajK())) * prod;*/
-	return -1. * (iloscZlychW() + iloscKolor());
+	return -1. * (iloscKolor());
 }
 
 void Population::getParents(Chromosome & p1, Chromosome & p2)
@@ -175,10 +175,14 @@ void Population::pokoloruj(Graph g, Population &p)
 		int point = rand() % g.dajN();
 		c1.koloruj(p1, p2, false, point);
 		c1.mutation(p.avgBadEdges());
+		this->add(c1);
+		c1.wypisz();
+		cout << endl;
 		c2.koloruj(p1, p2, true, point);
 		c2.mutation(p.avgBadEdges());
-		this->add(c1);
 		this->add(c2);
+		c2.wypisz();
+		cout << endl;
 	}
 }
 
