@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "time.h"
 #include "iostream"
+#include "algorithm"
 #include "AlgGen.h"
 using namespace std;
 #define popSIZE 50
+#define mutationRATE 10
 int Chromosome::iloscKolor()
 {
 	bool *tK = new bool[rozmiar];
@@ -25,8 +27,21 @@ int Chromosome::iloscZlychW()
 
 void Chromosome::genLos()
 {
-	for (int i = 0; i < rozmiar; ++i)
-		tabKol[i] = rand() % rozmiar;
+	int i, j, max = 0, wyb;
+	bool *K = new bool[rozmiar]; //tablica mo¿liwych kolorów
+	list<int>::iterator k;
+	for (int i = 0; i < rozmiar; ++i) tabKol[i] = -1;
+	wyb = rand() % rozmiar;
+	tabKol[wyb] = 0;
+	for (i = 1; i < rozmiar; ++i) {
+		for (j = 0; j < rozmiar; j++) K[j] = false;
+		for (k = graph.lS[wyb].begin(); k != graph.lS[wyb].end(); ++k)
+			if (tabKol[*k] != -1)
+				K[tabKol[*k]] = true;
+		for (j = 0; K[j]; ++j);
+		tabKol[wyb] = j;
+		wyb = (wyb + 1) % rozmiar;
+	}
 }
 
 void Chromosome::koloruj(Chromosome p1, Chromosome p2, bool W, int point)
@@ -38,18 +53,10 @@ void Chromosome::koloruj(Chromosome p1, Chromosome p2, bool W, int point)
 			tabKol[i] = W ? p2.tabKol[i] : p1.tabKol[i];
 }
 
-void Chromosome::mutation(double f)
-{
-	if (f > 4.)
-		mutacja1();
-	else
-		mutacja2();
-}
-
-void Chromosome::mutacja1()
+void Chromosome::napraw()
 {
 	vector<int> mozliweK;
-	bool *allKol=new bool[rozmiar];
+	bool *allKol = new bool[rozmiar];
 	bool change = false;
 	for (int i = 0; i < rozmiar; ++i) {
 		for (list<int>::iterator ji = graph.pocz(i); ji != graph.kon(i); ++ji)
@@ -72,22 +79,14 @@ void Chromosome::mutacja1()
 	}
 }
 
-void Chromosome::mutacja2()
+void Chromosome::mutation(Chromosome c)
 {
-	bool change;
-	int kolor;
-	for (int i = 0; i < rozmiar; ++i) {
-		change = false;
-		for (list<int>::iterator ji = graph.pocz(i); ji != graph.kon(i); ++ji)
-			if (tabKol[i] == tabKol[*ji])
-				change = true;
-		if (change) {
-			do 
-				kolor = rand() % rozmiar;
-			while (kolor == tabKol[i]);
-			tabKol[i] = kolor;
-		}
-	}
+	int wyb = rand() % rozmiar;
+	int tmp = tabKol[wyb];
+	double f = this->fitness();
+	tabKol[wyb] = c.tabKol[wyb];
+	if (this->fitness() < f)
+		tabKol[wyb] = tmp;
 }
 
 double Chromosome::fitness()
@@ -108,53 +107,29 @@ double Chromosome::fitness()
 			prod = 1. * prod * sum / rozmiar;
 	}
 	return 1. * (1. - (1. * iloscKolor() / graph.dajK())) * prod;*/
-	return -1. * (iloscKolor());
+	return -1. * (iloscKolor() + iloscZlychW());
+}
+
+bool Chromosome::operator<(Chromosome & c)
+{
+	return (this->fitness() > c.fitness());
 }
 
 void Population::getParents(Chromosome & p1, Chromosome & p2)
 {
-	if (avgBadEdges() > 4.)
-		parents1(p1, p2);
-	else
-		parents2(p1, p2);
-}
-
-void Population::parents1(Chromosome & p1, Chromosome & p2)
-{
 	Chromosome temp1 = p1, temp2 = p2;
-	temp1 = this->chromosomes[rand() % this->chromosomes.size()];
-	temp2 = this->chromosomes[rand() % this->chromosomes.size()];
+	temp1 = this->chromosomes[rand() % (this->chromosomes.size()/2)];
+	temp2 = this->chromosomes[rand() % (this->chromosomes.size()/2)];
 	if (temp1.fitness() > temp2.fitness())
 		p1 = temp1;
 	else
 		p1 = temp2;
-	temp1 = this->chromosomes[rand() % this->chromosomes.size()];
-	temp2 = this->chromosomes[rand() % this->chromosomes.size()];
+	temp1 = this->chromosomes[rand() % (this->chromosomes.size() / 2)];
+	temp2 = this->chromosomes[rand() % (this->chromosomes.size() / 2)];
 	if (temp1.fitness() > temp2.fitness())
 		p2 = temp1;
 	else
 		p2 = temp2;
-}
-
-void Population::parents2(Chromosome & p1, Chromosome & p2)
-{
-	Chromosome temp1 = this->chromosomes[0], temp2 = this->chromosomes[1];
-	if (temp1.fitness() > temp2.fitness()) {
-		p1 = temp1;
-		p2 = temp2;
-	}
-	else {
-		p1 = temp2;
-		p2 = temp1;
-	}
-	for (int i = 2; i < chromosomes.size(); ++i)
-		if (p1.fitness() <= chromosomes[i].fitness()) {
-			p2 = p1;
-			p1 = chromosomes[i];
-		}
-		else
-			if (p2.fitness() <= chromosomes[i].fitness())
-				p2 = chromosomes[i];
 }
 
 void Population::firstGen(Graph g)
@@ -174,16 +149,21 @@ void Population::pokoloruj(Graph g, Population &p)
 		p.getParents(p1, p2);
 		int point = rand() % g.dajN();
 		c1.koloruj(p1, p2, false, point);
-		c1.mutation(p.avgBadEdges());
+		/*if (c1.iloscZlychW() > 20.)
+			c1.napraw();*/
 		this->add(c1);
-		c1.wypisz();
-		cout << endl;
 		c2.koloruj(p1, p2, true, point);
-		c2.mutation(p.avgBadEdges());
+		/*if (c2.iloscZlychW() > 20.)
+			c2.napraw();*/
 		this->add(c2);
-		c2.wypisz();
-		cout << endl;
 	}
+}
+
+void Population::mute()
+{
+	for (int i = 0; i < chromosomes.size(); i++)
+		if ((rand() / RAND_MAX) < mutationRATE)
+			chromosomes[i].mutation(chromosomes[rand() % chromosomes.size()]);
 }
 
 double Population::avgBadEdges()
@@ -208,6 +188,17 @@ double Population::avgFitness()
 		sum = 0. + sum + chromosomes[i].fitness();
 	return 1. * sum / chromosomes.size();
 }
+
+void Population::sortuj()
+{
+	sort(this->chromosomes.begin(), this->chromosomes.end());
+}
+
+Chromosome Population::getP(int i)
+{
+	return this->chromosomes[i];
+}
+
 bool sprawdz(double *tab, int r) {
 	for (int i = 1; i < r; ++i)
 		if (tab[i - 1] != tab[i])
@@ -221,17 +212,19 @@ void AlgGen(Graph g)
 	Population firstPop;
 	firstPop.firstGen(g);
 	population.push_back(firstPop);
-	double sprK[10] = { 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0 };
+	double sprK[10] = { 1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0 };
 	int i = 0;
-	sprK[0] = population[i].avgColors();
+	sprK[0] = population[i].avgFitness();
 	cout << "Generacja " << i << " - Ilosc zlych krawedzi: " << population[i].avgBadEdges() << " - Ilosc kolorow: " << population[i].avgColors() << " - Fitness: " << population[i].avgFitness() << endl;
-	while (!(population.size()==20000 || (population[i].avgBadEdges()==0 && sprawdz(sprK,10)))) {
+	while (!(population.size()==20000 || (sprawdz(sprK,10) && population[i].avgBadEdges()==0))) {
 		Population *p = new Population;
+		population[i].sortuj();
 		p->pokoloruj(g, population[i]);
+		p->mute();
 		population.push_back(*p);
 		for (int j = 9; j > 0; --j)
 			sprK[j] = sprK[j - 1];
-		sprK[0] = population[++i].avgColors();
+		sprK[0] = population[++i].avgFitness();
 		cout << "Generacja " << i << " - Ilosc zlych krawedzi: " << population[i].avgBadEdges() << " - Ilosc kolorow: " << population[i].avgColors() << " - Fitness: " << population[i].avgFitness() << endl;
 	}
 	cout << "Ilosc generacji: " << population.size() << endl;

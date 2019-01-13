@@ -13,11 +13,11 @@ public:
 	int iloscZlychW();
 	void genLos();
 	void koloruj(Chromosome p1, Chromosome p2, bool W, int point);
-	void mutation(double f);
-	void mutacja1();
-	void mutacja2();
+	void napraw();
+	void mutation(Chromosome c);
 	void wypisz() { for (int i = 0; i < rozmiar; ++i) cout << tabKol[i] << " "; }
 	double fitness();
+	bool operator <(Chromosome &c);
 };
 class Population:public Chromosome {
 protected:
@@ -26,13 +26,15 @@ public:
 	Population() {};
 	void add(Chromosome c) { chromosomes.push_back(c); }
 	void getParents(Chromosome &p1, Chromosome &p2);
-	void parents1(Chromosome &p1, Chromosome &p2);
-	void parents2(Chromosome &p1, Chromosome &p2);
 	void firstGen(Graph g);
 	void pokoloruj(Graph g, Population &p);
+	void mute();
 	double avgBadEdges();
 	double avgColors();
 	double avgFitness();
+	void wypiszN() { for (int i = 0; i < chromosomes.size(); ++i) cout << this->chromosomes[i].fitness() << " "; cout << endl; }
+	void sortuj();
+	Chromosome getP(int i);
 };
 
 void AlgGen(Graph g);
